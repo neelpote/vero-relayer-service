@@ -9,6 +9,7 @@ const {
   getEventQueueName,
   getRedisConnectionOptions
 } = require('../queue/redis');
+const { validateFeeConfig } = require('../services/fee-engine');
 
 function getJobEventType(job) {
   return (job && job.data && job.data.eventType) || 'unknown';
@@ -77,6 +78,8 @@ function createEventWorker(options = {}) {
 }
 
 async function startEventWorker() {
+  validateFeeConfig();
+
   const queueName = getEventQueueName();
   const concurrency = getEventQueueConcurrency();
   const worker = createEventWorker({ queueName, concurrency });
