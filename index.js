@@ -1,12 +1,15 @@
 const express = require('express');
 const { registerTaskOnChain } = require('./stellar');
-const { registerMetrics, vero_events_processed_total, queue_latency_seconds } = require('./src/metrics/metrics');
+const { verifySignature } = require('./src/middleware/auth');
 
 const app = express();
-registerMetrics(app);
-app.use(express.json());
+app.use(express.json({
+  verify: (req, res, buf) => {
+    req.rawBody = buf;
+  }
+}));
 
-app.post('/github-webhook', async (req, res) => {
+app.post('/github-webhook', verifySignature, async (req, res) => {
   const { action, pull_request: pr } = req.body;
 
   if (action !== 'closed' || !pr?.merged) {
