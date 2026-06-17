@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState, useMemo } from 'react';
 import cytoscape from 'cytoscape';
 import { Search, Eye, Filter, Code, Info, RefreshCw, ZoomIn, ZoomOut, Maximize, Zap } from 'lucide-react';
 import Docs from '../docs/Docs';
+import AdminPanel from '../admin/AdminPanel';
 import './visualizer.css';
 
 interface GraphElement {
@@ -29,7 +30,7 @@ export default function Visualizer() {
   const [error, setError] = useState<string | null>(null);
   
   // Tab Navigation state
-  const [currentTab, setCurrentTab] = useState<'graph' | 'docs'>('graph');
+  const [currentTab, setCurrentTab] = useState<'graph' | 'docs' | 'admin'>('graph');
   const [selectedDocModule, setSelectedDocModule] = useState<string | null>(null);
   
   // Local state for search & filters
@@ -378,6 +379,12 @@ export default function Visualizer() {
           >
             Protocol Docs
           </button>
+          <button
+            onClick={() => setCurrentTab('admin')}
+            className={`tab-btn ${currentTab === 'admin' ? 'active' : ''}`}
+          >
+            Admin Panel
+          </button>
         </div>
         
         {/* Controls */}
@@ -406,6 +413,8 @@ export default function Visualizer() {
       <main className="visualizer-main">
         {currentTab === 'docs' ? (
           <Docs initialSelectedModule={selectedDocModule} />
+        ) : currentTab === 'admin' ? (
+          <AdminPanel />
         ) : (
           <>
             {/* Sidebar for Filters & Search */}

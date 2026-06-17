@@ -1,4 +1,5 @@
-use soroban_sdk::{contractimpl, panic_with_error, Address, Bytes, BytesN, Env, Vec};
+use soroban_sdk::{panic_with_error, Address, Bytes, BytesN, Env, Vec};
+use soroban_sdk::xdr::ToXdr;
 
 use crate::errors::AdminError;
 use crate::types::{AdminAction, DataKey, MultisigAction};
@@ -66,7 +67,7 @@ pub fn compute_action_hash(env: &Env, nonce: u64, action: &AdminAction) -> Bytes
         }
     }
 
-    env.crypto().sha256(&preimage)
+    env.crypto().sha256(&preimage).into()
 }
 
 // ── Core multisig logic ──────────────────────────────────────────────────────
@@ -74,6 +75,7 @@ pub fn compute_action_hash(env: &Env, nonce: u64, action: &AdminAction) -> Bytes
 /// Create a new proposal.  The caller must be a registered admin.
 /// Returns the `action_hash` that identifies the proposal.
 pub fn propose_action(env: &Env, proposer: &Address, action: AdminAction) -> BytesN<32> {
+    assert_not_killed(env);
     proposer.require_auth();
     assert_is_admin(env, proposer);
 
@@ -109,6 +111,7 @@ pub fn propose_action(env: &Env, proposer: &Address, action: AdminAction) -> Byt
 /// Cast an approval vote. Executes the action when M approvals are reached.
 /// Returns `true` when the action was executed.
 pub fn approve_action(env: &Env, approver: &Address, action_hash: BytesN<32>) -> bool {
+    assert_not_killed(env);
     approver.require_auth();
     assert_is_admin(env, approver);
 
@@ -210,4 +213,20 @@ pub fn initialize(env: &Env, admins: Vec<Address>, threshold: u32) {
     env.storage().instance().set(&DataKey::Admins, &admins);
     env.storage().instance().set(&DataKey::Threshold, &threshold);
     env.storage().instance().set(&DataKey::Nonce, &0u64);
+}
+
+pub fn assert_not_killed(env: &Env) {
+    if is_killed(env) {
+        panic_with_error!(env, AdminError::ContractKilled);
+    }
+}
+
+pub fn is_killed(env: &Env) -> bool {
+    env.storage().instance().get(&DataKey::Killed).unwrap_or(false)
+}
+
+pub fn kill(env: &Env, admin: &Address) {
+    admin.require_auth();
+    assert_is_admin(env, admin);
+    env.storage().instance().set(&DataKey::Killed, &true);
 }
