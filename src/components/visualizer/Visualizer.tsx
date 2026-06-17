@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useMemo } from 'react';
 import cytoscape from 'cytoscape';
 import { Search, Eye, Filter, Code, Info, RefreshCw, ZoomIn, ZoomOut, Maximize, Zap } from 'lucide-react';
+import Docs from '../docs/Docs';
 import './visualizer.css';
 
 interface GraphElement {
@@ -26,6 +27,10 @@ export default function Visualizer() {
   const [data, setData] = useState<GraphData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // Tab Navigation state
+  const [currentTab, setCurrentTab] = useState<'graph' | 'docs'>('graph');
+  const [selectedDocModule, setSelectedDocModule] = useState<string | null>(null);
   
   // Local state for search & filters
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -358,173 +363,211 @@ export default function Visualizer() {
           </div>
           <h1>Vero Soroban Call Graph</h1>
         </div>
+
+        {/* Tab Navigation */}
+        <div className="tab-navigation">
+          <button
+            onClick={() => setCurrentTab('graph')}
+            className={`tab-btn ${currentTab === 'graph' ? 'active' : ''}`}
+          >
+            Call Graph
+          </button>
+          <button
+            onClick={() => setCurrentTab('docs')}
+            className={`tab-btn ${currentTab === 'docs' ? 'active' : ''}`}
+          >
+            Protocol Docs
+          </button>
+        </div>
         
         {/* Controls */}
         <div className="header-actions">
-          <button onClick={handleResetLayout} title="Reset Layout" className="btn-action">
-            <RefreshCw size={18} />
-            <span>Reset Layout</span>
-          </button>
-          <div className="divider"></div>
-          <button onClick={handleZoomIn} title="Zoom In" className="btn-icon">
-            <ZoomIn size={18} />
-          </button>
-          <button onClick={handleZoomOut} title="Zoom Out" className="btn-icon">
-            <ZoomOut size={18} />
-          </button>
-          <button onClick={handleFit} title="Fit Graph" className="btn-icon">
-            <Maximize size={18} />
-          </button>
+          {currentTab === 'graph' && (
+            <>
+              <button onClick={handleResetLayout} title="Reset Layout" className="btn-action">
+                <RefreshCw size={18} />
+                <span>Reset Layout</span>
+              </button>
+              <div className="divider"></div>
+              <button onClick={handleZoomIn} title="Zoom In" className="btn-icon">
+                <ZoomIn size={18} />
+              </button>
+              <button onClick={handleZoomOut} title="Zoom Out" className="btn-icon">
+                <ZoomOut size={18} />
+              </button>
+              <button onClick={handleFit} title="Fit Graph" className="btn-icon">
+                <Maximize size={18} />
+              </button>
+            </>
+          )}
         </div>
       </header>
 
       <main className="visualizer-main">
-        {/* Sidebar for Filters & Search */}
-        <aside className="sidebar-left glass-panel">
-          <div className="sidebar-section">
-            <h3>Search & Filters</h3>
-            <div className="search-box">
-              <Search size={18} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Search functions..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-
-            <div className="filter-options">
-              <label className="checkbox-container">
-                <input
-                  type="checkbox"
-                  checked={filterPublicOnly}
-                  onChange={(e) => setFilterPublicOnly(e.target.checked)}
-                />
-                <span className="checkbox-checkmark"></span>
-                <span className="checkbox-label">Public Entry Points Only</span>
-              </label>
-            </div>
-          </div>
-
-          <div className="sidebar-section legend-section">
-            <h3>Legend</h3>
-            <div className="legend-item">
-              <span className="legend-badge badge-public"></span>
-              <span>Public Contract Method (pub fn)</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-badge badge-private"></span>
-              <span>Internal Helper (fn)</span>
-            </div>
-            <div className="legend-item">
-              <span className="legend-badge badge-container"></span>
-              <span>Module Namespace (file)</span>
-            </div>
-          </div>
-
-          {loading && (
-            <div className="status-message loading-state">
-              <RefreshCw size={24} className="spin-icon" />
-              <p>Analyzing Soroban contracts...</p>
-            </div>
-          )}
-
-          {error && (
-            <div className="status-message error-state">
-              <p>Error: {error}</p>
-            </div>
-          )}
-
-          {!loading && !error && filteredElements.length === 0 && (
-            <div className="status-message empty-state">
-              <Info size={24} />
-              <p>No matching elements found.</p>
-            </div>
-          )}
-        </aside>
-
-        {/* Canvas container */}
-        <div className="canvas-wrapper">
-          <div ref={cyContainerRef} className="cytoscape-canvas" />
-        </div>
-
-        {/* Selected Node Details (Right Sidebar) */}
-        <aside className={`sidebar-right glass-panel ${selectedNodeDetails ? 'open' : ''}`}>
-          {selectedNodeDetails ? (
-            <div className="details-container">
-              <div className="details-header">
-                <h2>{selectedNodeDetails.name}</h2>
-                <span className={`visibility-badge ${selectedNodeDetails.isPublic ? 'public' : 'private'}`}>
-                  {selectedNodeDetails.isPublic ? 'Public Entrypoint' : 'Internal Helper'}
-                </span>
-              </div>
-
-              <div className="details-meta">
-                <div className="meta-item">
-                  <span className="meta-label">File:</span>
-                  <span className="meta-value">{selectedNodeDetails.file}</span>
+        {currentTab === 'docs' ? (
+          <Docs initialSelectedModule={selectedDocModule} />
+        ) : (
+          <>
+            {/* Sidebar for Filters & Search */}
+            <aside className="sidebar-left glass-panel">
+              <div className="sidebar-section">
+                <h3>Search & Filters</h3>
+                <div className="search-box">
+                  <Search size={18} className="search-icon" />
+                  <input
+                    type="text"
+                    placeholder="Search functions..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
                 </div>
-                <div className="meta-item">
-                  <span className="meta-label">Signature:</span>
-                  <span className="meta-value code-font">
-                    {selectedNodeDetails.isPublic ? 'pub fn ' : 'fn '}{selectedNodeDetails.name}
-                  </span>
+
+                <div className="filter-options">
+                  <label className="checkbox-container">
+                    <input
+                      type="checkbox"
+                      checked={filterPublicOnly}
+                      onChange={(e) => setFilterPublicOnly(e.target.checked)}
+                    />
+                    <span className="checkbox-checkmark"></span>
+                    <span className="checkbox-label">Public Entry Points Only</span>
+                  </label>
                 </div>
               </div>
 
-              {/* Callers & Callees lists */}
-              <div className="relations-section">
-                <h3>Called By (Callers)</h3>
-                {selectedNodeDetails.callers.length > 0 ? (
-                  <ul className="relation-list">
-                    {selectedNodeDetails.callers.map((caller) => (
-                      <li key={caller.id} onClick={() => setSelectedNodeId(caller.id)}>
-                        <span className="relation-name">{caller.label}</span>
-                        <span className="relation-file">{caller.file}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-relations">No callers in contracts</p>
-                )}
+              <div className="sidebar-section legend-section">
+                <h3>Legend</h3>
+                <div className="legend-item">
+                  <span className="legend-badge badge-public"></span>
+                  <span>Public Contract Method (pub fn)</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-badge badge-private"></span>
+                  <span>Internal Helper (fn)</span>
+                </div>
+                <div className="legend-item">
+                  <span className="legend-badge badge-container"></span>
+                  <span>Module Namespace (file)</span>
+                </div>
               </div>
 
-              <div className="relations-section">
-                <h3>Calls (Callees)</h3>
-                {selectedNodeDetails.callees.length > 0 ? (
-                  <ul className="relation-list">
-                    {selectedNodeDetails.callees.map((callee) => (
-                      <li key={callee.id} onClick={() => setSelectedNodeId(callee.id)}>
-                        <span className="relation-name">{callee.label}</span>
-                        <span className="relation-file">{callee.file}</span>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p className="no-relations">No callees in contracts</p>
-                )}
-              </div>
-
-              {/* Function Code Snippet */}
-              {selectedNodeDetails.body && (
-                <div className="code-section">
-                  <div className="code-header">
-                    <Code size={16} />
-                    <span>Implementation</span>
-                  </div>
-                  <pre className="code-block">
-                    <code>{selectedNodeDetails.body}</code>
-                  </pre>
+              {loading && (
+                <div className="status-message loading-state">
+                  <RefreshCw size={24} className="spin-icon" />
+                  <p>Analyzing Soroban contracts...</p>
                 </div>
               )}
+
+              {error && (
+                <div className="status-message error-state">
+                  <p>Error: {error}</p>
+                </div>
+              )}
+
+              {!loading && !error && filteredElements.length === 0 && (
+                <div className="status-message empty-state">
+                  <Info size={24} />
+                  <p>No matching elements found.</p>
+                </div>
+              )}
+            </aside>
+
+            {/* Canvas container */}
+            <div className="canvas-wrapper">
+              <div ref={cyContainerRef} className="cytoscape-canvas" />
             </div>
-          ) : (
-            <div className="no-selection">
-              <Info size={32} />
-              <p>Select a function node to view its implementation details and call context.</p>
-            </div>
-          )}
-        </aside>
+
+            {/* Selected Node Details (Right Sidebar) */}
+            <aside className={`sidebar-right glass-panel ${selectedNodeDetails ? 'open' : ''}`}>
+              {selectedNodeDetails ? (
+                <div className="details-container">
+                  <div className="details-header" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <h2>{selectedNodeDetails.name}</h2>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <span className={`visibility-badge ${selectedNodeDetails.isPublic ? 'public' : 'private'}`}>
+                        {selectedNodeDetails.isPublic ? 'Public Entrypoint' : 'Internal Helper'}
+                      </span>
+                      <button
+                        onClick={() => {
+                          setSelectedDocModule(selectedNodeDetails.file);
+                          setCurrentTab('docs');
+                        }}
+                        className="btn-small btn-small-primary"
+                        style={{ padding: '4px 8px', fontSize: '11px' }}
+                      >
+                        View Docs
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="details-meta">
+                    <div className="meta-item">
+                      <span className="meta-label">File:</span>
+                      <span className="meta-value">{selectedNodeDetails.file}</span>
+                    </div>
+                    <div className="meta-item">
+                      <span className="meta-label">Signature:</span>
+                      <span className="meta-value code-font">
+                        {selectedNodeDetails.isPublic ? 'pub fn ' : 'fn '}{selectedNodeDetails.name}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Callers & Callees lists */}
+                  <div className="relations-section">
+                    <h3>Called By (Callers)</h3>
+                    {selectedNodeDetails.callers.length > 0 ? (
+                      <ul className="relation-list">
+                        {selectedNodeDetails.callers.map((caller) => (
+                          <li key={caller.id} onClick={() => setSelectedNodeId(caller.id)}>
+                            <span className="relation-name">{caller.label}</span>
+                            <span className="relation-file">{caller.file}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="no-relations">No callers in contracts</p>
+                    )}
+                  </div>
+
+                  <div className="relations-section">
+                    <h3>Calls (Callees)</h3>
+                    {selectedNodeDetails.callees.length > 0 ? (
+                      <ul className="relation-list">
+                        {selectedNodeDetails.callees.map((callee) => (
+                          <li key={callee.id} onClick={() => setSelectedNodeId(callee.id)}>
+                            <span className="relation-name">{callee.label}</span>
+                            <span className="relation-file">{callee.file}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="no-relations">No callees in contracts</p>
+                    )}
+                  </div>
+
+                  {/* Function Code Snippet */}
+                  {selectedNodeDetails.body && (
+                    <div className="code-section">
+                      <div className="code-header">
+                        <Code size={16} />
+                        <span>Implementation</span>
+                      </div>
+                      <pre className="code-block">
+                        <code>{selectedNodeDetails.body}</code>
+                      </pre>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="no-selection">
+                  <Info size={32} />
+                  <p>Select a function node to view its implementation details and call context.</p>
+                </div>
+              )}
+            </aside>
+          </>
+        )}
       </main>
     </div>
   );
