@@ -34,4 +34,5 @@ pub enum DataKey {
     Nonce,
     Proposal(BytesN<32>), // keyed by action_hash
     Task(u64),            // registered PR numbers
+    Killed,
 }

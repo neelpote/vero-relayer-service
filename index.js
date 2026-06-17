@@ -38,6 +38,34 @@ function createApp(options = {}) {
     }
   });
 
+  let contractKilled = false;
+
+  app.get('/api/admin/status', (req, res) => {
+    res.json({ killed: contractKilled });
+  });
+
+  app.post('/api/admin/kill', (req, res) => {
+    const { adminAddress } = req.body;
+    if (!adminAddress || adminAddress.trim() === '') {
+      return res.status(400).json({ error: 'Admin address is required' });
+    }
+
+    const stellarAddressRegex = /^G[A-Z2-7]{55}$/;
+    if (!stellarAddressRegex.test(adminAddress)) {
+      return res.status(400).json({ error: 'Invalid Stellar admin address format' });
+    }
+
+    contractKilled = true;
+    logger.warn({ adminAddress }, 'Admin triggered contract kill switch');
+    res.json({ ok: true, message: 'Contract successfully killed' });
+  });
+
+  app.post('/api/admin/resume', (req, res) => {
+    contractKilled = false;
+    logger.info('Contract kill switch reset, service active');
+    res.json({ ok: true, message: 'Contract successfully reactivated' });
+  });
+
   // Serve static files from Vite's build directory
   app.use(express.static(path.join(__dirname, 'dist')));
 

@@ -6,8 +6,7 @@ mod types;
 
 use soroban_sdk::{contract, contractimpl, Address, BytesN, Env, Vec};
 
-use admin::{approve_action, assert_is_admin, get_admins, get_threshold, initialize, propose_action};
-use errors::AdminError;
+use admin::{approve_action, get_admins, get_threshold, initialize, propose_action};
 use types::AdminAction;
 
 pub use errors::AdminError as VeroAdminError;
@@ -66,6 +65,16 @@ impl VeroAdminContract {
     pub fn approve(env: Env, approver: Address, action_hash: BytesN<32>) -> bool {
         approve_action(&env, &approver, action_hash)
     }
+
+    /// Emergency halt triggered by any single admin.
+    pub fn kill(env: Env, admin: Address) {
+        admin::kill(&env, &admin);
+    }
+
+    /// Check if the contract has been halted.
+    pub fn is_killed(env: Env) -> bool {
+        admin::is_killed(&env)
+    }
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -98,7 +107,7 @@ mod tests {
     // ── Unauthorized single-signer ───────────────────────────────────────────
 
     #[test]
-    #[should_panic(expected = "Unauthorized")]
+    #[should_panic(expected = "Error(Contract, #1)")]
     fn single_signer_cannot_execute_directly() {
         let (env, client, _admins) = setup(2, 3);
         let rogue = Address::generate(&env);
@@ -138,7 +147,7 @@ mod tests {
     // ── Over-threshold: votes beyond M are accepted but action already done ──
 
     #[test]
-    #[should_panic(expected = "AlreadyExecuted")]
+    #[should_panic(expected = "Error(Contract, #7)")]
     fn over_threshold_vote_on_executed_proposal_panics() {
         let (env, client, admins) = setup(2, 3);
 
@@ -178,10 +187,44 @@ mod tests {
     // ── Non-admin cannot propose ─────────────────────────────────────────────
 
     #[test]
-    #[should_panic(expected = "Unauthorized")]
+    #[should_panic(expected = "Error(Contract, #1)")]
     fn non_admin_propose_panics() {
         let (env, client, _admins) = setup(2, 3);
         let outsider = Address::generate(&env);
         client.propose_register_task(&outsider, &55u64);
+    }
+
+    // ── Kill Switch Tests ────────────────────────────────────────────────────
+
+    #[test]
+    fn admin_can_kill_contract() {
+        let (env, client, admins) = setup(2, 3);
+        client.kill(&admins.get(0).unwrap());
+        assert!(client.is_killed());
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #1)")]
+    fn outsider_cannot_kill_contract() {
+        let (env, client, _admins) = setup(2, 3);
+        let outsider = Address::generate(&env);
+        client.kill(&outsider);
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #8)")]
+    fn propose_fails_when_contract_killed() {
+        let (env, client, admins) = setup(2, 3);
+        client.kill(&admins.get(0).unwrap());
+        client.propose_register_task(&admins.get(0).unwrap(), &42u64);
+    }
+
+    #[test]
+    #[should_panic(expected = "Error(Contract, #8)")]
+    fn approve_fails_when_contract_killed() {
+        let (env, client, admins) = setup(2, 3);
+        let hash = client.propose_register_task(&admins.get(0).unwrap(), &42u64);
+        client.kill(&admins.get(0).unwrap());
+        client.approve(&admins.get(1).unwrap(), &hash);
     }
 }

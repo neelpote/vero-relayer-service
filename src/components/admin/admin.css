@@ -1,0 +1,299 @@
+/* Admin Panel Styles */
+
+.admin-container {
+  width: 100%;
+  height: 100%;
+  padding: 40px;
+  overflow-y: auto;
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+/* Background status glow */
+.status-glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(140px);
+  pointer-events: none;
+  z-index: 0;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: background 0.5s ease;
+}
+
+.glow-green {
+  background: radial-gradient(circle, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
+}
+
+.glow-red {
+  background: radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%);
+}
+
+/* Dashboard Grid Layout */
+.admin-grid {
+  display: flex;
+  gap: 32px;
+  max-width: 1000px;
+  width: 100%;
+  z-index: 1;
+}
+
+.admin-card {
+  flex: 1;
+  padding: 32px;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid var(--panel-border);
+  padding-bottom: 16px;
+}
+
+.card-header h3 {
+  font-size: 18px;
+  font-weight: 600;
+  color: white;
+}
+
+.warning-icon {
+  color: #ef4444;
+}
+
+/* Status Display Section */
+.status-display {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  margin: 12px 0;
+}
+
+/* Pulsating Rings */
+.status-indicator-ring {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.status-indicator-ring.active {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
+}
+
+.status-indicator-ring.killed {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.2);
+  animation: pulse-ring-red 2s infinite ease-in-out;
+}
+
+.status-indicator-dot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+
+.status-indicator-ring.active .status-indicator-dot {
+  background-color: var(--emerald);
+  box-shadow: 0 0 8px var(--emerald);
+}
+
+.status-indicator-ring.killed .status-indicator-dot {
+  background-color: #ef4444;
+  box-shadow: 0 0 8px #ef4444;
+  animation: pulse-dot-red 2s infinite ease-in-out;
+}
+
+.status-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex: 1;
+}
+
+.status-badge-large {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.status-badge-large.active {
+  background-color: rgba(16, 185, 129, 0.15);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.status-badge-large.terminated {
+  background-color: rgba(239, 68, 68, 0.15);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  animation: pulse-badge-red 2s infinite ease-in-out;
+}
+
+.status-description {
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* Kill Switch Form */
+.emergency-warning {
+  font-size: 14px;
+  color: #f87171;
+  background-color: rgba(239, 68, 68, 0.05);
+  border-left: 4px solid #ef4444;
+  padding: 12px 16px;
+  border-radius: 0 8px 8px 0;
+  line-height: 1.5;
+}
+
+.kill-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.address-input {
+  width: 100%;
+  padding: 12px;
+  background-color: rgba(0, 0, 0, 0.25);
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  color: white;
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+.address-input:focus {
+  outline: none;
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+}
+
+.validation-indicator {
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.validation-indicator.valid {
+  color: #34d399;
+}
+
+.validation-indicator.invalid {
+  color: #f87171;
+}
+
+/* Action Buttons */
+.btn-kill {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #f87171;
+}
+
+.btn-kill:hover:not(:disabled) {
+  background-color: #ef4444;
+  border-color: #ef4444;
+  color: white;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.35);
+}
+
+.btn-resume {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+  color: #34d399;
+}
+
+.btn-resume:hover:not(:disabled) {
+  background-color: var(--emerald);
+  border-color: var(--emerald);
+  color: white;
+  box-shadow: 0 0 16px rgba(16, 185, 129, 0.35);
+}
+
+.btn-kill:disabled, .btn-resume:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
+/* Alerts */
+.alert-message {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.alert-success {
+  background-color: rgba(16, 185, 129, 0.1);
+  border: 1px solid rgba(16, 185, 129, 0.2);
+  color: #34d399;
+}
+
+.alert-error {
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #f87171;
+}
+
+/* Pulsating Keyframes */
+@keyframes pulse-ring-red {
+  0% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+  50% { box-shadow: 0 0 24px rgba(239, 68, 68, 0.45); }
+  100% { box-shadow: 0 0 8px rgba(239, 68, 68, 0.2); }
+}
+
+@keyframes pulse-dot-red {
+  0% { transform: scale(0.9); box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
+  50% { transform: scale(1.1); box-shadow: 0 0 14px rgba(239, 68, 68, 0.9); }
+  100% { transform: scale(0.9); box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
+}
+
+@keyframes pulse-badge-red {
+  0% { opacity: 0.85; }
+  50% { opacity: 1.0; border-color: rgba(239, 68, 68, 0.4); }
+  100% { opacity: 0.85; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .admin-grid {
+    flex-direction: column;
+  }
+}

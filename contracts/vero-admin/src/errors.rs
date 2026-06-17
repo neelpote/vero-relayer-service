@@ -11,4 +11,5 @@ pub enum AdminError {
     ProposalNotFound = 5,
     ProposalAlreadyExists = 6,
     AlreadyExecuted = 7,
+    ContractKilled = 8,
 }
