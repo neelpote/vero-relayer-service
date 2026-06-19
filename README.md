@@ -262,3 +262,9 @@ contracts/vero-admin/
 cd contracts/vero-admin
 cargo test
 ```
+
+---
+
+## Dynamic Remote Configuration Synchronization
+
+The service dynamically synchronizes configurations stored in Redis under the `vero:config` hash key on a periodic interval. Supported parameters include log levels and Stellar fee settings, enabling hot-swapping configurations without server restarts.
